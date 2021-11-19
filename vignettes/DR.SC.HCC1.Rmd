@@ -1,0 +1,175 @@
+---
+title: 'DR-SC: HCC1 Data Analysis'
+author: "Wei Liu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{DR-SC HCC1}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The package can be loaded with the command:
+```{r  eval=FALSE}
+library("DR.SC")
+```
+
+
+## Fit DR-SC using real data CRC
+### load the data HCC1 in package DR.SC
+```{r  eval=FALSE,message=FALSE, warning=FALSE}
+data("HCC1", package = 'DR.SC')
+```
+
+### Data preprocessing
+```{r  eval=FALSE}
+# standard log-normalization
+HCC1 <- NormalizeData(HCC1)
+# choose 2000 highly variable features
+seu <- FindVariableFeatures(HCC1, nfeatures = 1000)
+
+```
+
+## Fit DR-SC model using 2000 highly variable features
+We set the argument variable.type='HVGs' (default option) to use the highly variable genes.
+```{r  eval=FALSE}
+### Given K
+seu <- DR.SC(seu, K=6, platform = 'Visium', variable.type = 'HVGs',verbose=F)
+```
+
+### Visualization
+```{r  eval=FALSE}
+spatialPlotClusters(seu)
+```
+
+
+Show the tSNE plot based on the extracted features from DR-SC.
+```{r  eval=FALSE}
+drscPlot(seu)
+```
+
+Show the UMAP plot based on the extracted features from DR-SC.
+```{r  eval=FALSE}
+drscPlot(seu, visu.method = 'UMAP')
+```
+
+## Fit DR-SC model using 2000 spatially variable features
+
+```{r  eval=FALSE}
+# choose 2000 spatially variable features
+seus <- FindSVGs(seu, nfeatures = 1000)
+```
+
+We set the argument variable.type='SVGs' (default option) to use the spatially variable genes.
+```{r  eval=FALSE}
+### Given K
+seus <- DR.SC(seus, K=6, platform = 'Visium', variable.type='SVGs', verbose=T)
+```
+
+### Visualization
+Show the spatial scatter plot for clusters
+```{r  eval=FALSE}
+spatialPlotClusters(seus)
+```
+
+
+Show the tSNE plot based on the extracted features from DR-SC.
+```{r  eval=FALSE}
+drscPlot(seus)
+```
+Show the UMAP plot based on the extracted features from DR-SC.
+```{r  eval=FALSE}
+drscPlot(seus, visu.method = 'UMAP')
+```
+
+### Ridge plots 
+Find the marker genes for each clusters
+```{r  eval=FALSE}
+dat <- FindAllMarkers(seus)
+head(dat)
+library(dplyr, verbose=F)
+top2 <-  dat %>%
+  group_by(cluster) %>%
+  top_n(n = 2, wt = avg_log2FC)
+top2
+```
+
+Visualize single cell expression distributions in each cluster from Seruat.
+```{r  eval=FALSE}
+genes <- top2$gene[seq(1, 12, by=2)]
+RidgePlot(seus, features = genes, ncol = 2)
+```
+### Violin plot
+
+Visualize single cell expression distributions in each cluster
+```{r  eval=FALSE}
+
+VlnPlot(seus, features = genes, ncol=2)
+```
+
+### Feature plot
+We extract tSNE based on the features from DR-SC and then visualize feature expression in the low-dimensional space
+ 
+```{r  eval=FALSE}
+seus <- RunTSNE(seus, reduction="dr-sc", reduction.key='drsc_tSNE_')
+FeaturePlot(seus, features = genes, reduction = 'tsne' ,ncol=2)
+
+```
+
+
+### Dot plots 
+The size of the dot corresponds to the percentage of cells expressing the
+feature in each cluster. The color represents the average expression level
+```{r  eval=FALSE}
+DotPlot(seus, features = genes)
+```
+
+### Heatmap plot
+
+Single cell heatmap of feature expression
+```{r  eval=FALSE}
+# standard scaling (no regression)
+seus <- ScaleData(seus)
+DoHeatmap(subset(seus, downsample = 500), features = genes, size = 5)
+```
+
+## Fit DR-SC model using 2000 spatially variable features and using MBIC　to determine clusters
+
+```{r  eval=FALSE}
+# choose 2000 spatially variable features
+seus <- FindSVGs(seu, nfeatures = 2000, verbose = F)
+```
+
+We set the argument variable.type='SVGs' (default option) to use the spatially variable genes.
+```{r  eval=FALSE}
+### Given K
+seus <- DR.SC(seus, K_set=3:8, platform = 'Visium', variable.type='SVGs', verbose=F)
+```
+
+Plot the MBIC curve 
+```{r  eval=FALSE}
+mbicPlot(seus)
+```
+
+Show the spatial scatter plot for clusters
+```{r  eval=FALSE}
+spatialPlotClusters(seus)
+```
+
+Show the tSNE plot based on the extracted features from DR-SC.
+```{r  eval=FALSE}
+drscPlot(seus, dims=1:10)
+```
+
+
+## Session information
+```{r  eval=FALSE}
+sessionInfo()
+```
