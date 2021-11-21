@@ -5,13 +5,13 @@
 #include "RcppArmadillo.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <Rcpp.h>
-#include <omp.h>
+//#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <time.h>
-#include <iostream>
+//#include <time.h>
+//#include <iostream>
 #include "utilSimulDRcluster.h"
 
 #define INT_MIN (-INT_MAX - 1)

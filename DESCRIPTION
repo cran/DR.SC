@@ -1,8 +1,8 @@
 Type: Package
 Package: DR.SC
 Title: Joint Dimension Reduction and Spatial Clustering
-Version: 2.2
-Date: 2021-11-13
+Version: 2.3
+Date: 2021-11-19
 Authors@R: 
     c(person(given = "Wei",
              family = "Liu",
@@ -31,6 +31,6 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 NeedsCompilation: yes
 RoxygenNote: 7.1.1
-Packaged: 2021-11-18 03:03:10 UTC; Liuxianju
+Packaged: 2021-11-19 13:30:58 UTC; Liuxianju
 Repository: CRAN
-Date/Publication: 2021-11-19 07:00:04 UTC
+Date/Publication: 2021-11-21 16:10:17 UTC

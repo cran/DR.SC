@@ -1,7 +1,6 @@
 #include "RcppArmadillo.h"
 // [[Rcpp::depends(RcppArmadillo)]]
 
-#define INT_MIN (-INT_MAX - 1)
 
 using namespace Rcpp;
 using namespace arma;
