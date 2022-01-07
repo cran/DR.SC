@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
 #  data("HCC1", package = 'DR.SC')
 
 ## ----eval=FALSE---------------------------------------------------------------
+#  library(Seurat)
 #  # standard log-normalization
 #  HCC1 <- NormalizeData(HCC1)
 #  # choose 2000 highly variable features
@@ -19,7 +20,7 @@ knitr::opts_chunk$set(
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  ### Given K
-#  seu <- DR.SC(seu, K=6, platform = 'Visium', variable.type = 'HVGs',verbose=F)
+#  seu <- DR.SC(seu, K=6, platform = 'Visium',nfeatures=1000, variable.type = 'HVGs',verbose=F)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  spatialPlotClusters(seu)
@@ -36,7 +37,8 @@ knitr::opts_chunk$set(
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  ### Given K
-#  seus <- DR.SC(seus, K=6, platform = 'Visium', variable.type='SVGs', verbose=T)
+#  seus <- DR.SC(seus, K=6, platform = 'Visium', nfeatures=1000,
+#                variable.type='SVGs', verbose=T)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  spatialPlotClusters(seus)
@@ -48,7 +50,8 @@ knitr::opts_chunk$set(
 #  drscPlot(seus, visu.method = 'UMAP')
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  dat <- FindAllMarkers(seus)
+#  SVGs <- topSVGs(seus, ntop = 1000)
+#  dat <- FindAllMarkers(seus, features = SVGs)
 #  head(dat)
 #  library(dplyr, verbose=F)
 #  top2 <-  dat %>%
