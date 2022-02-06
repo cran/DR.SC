@@ -12,7 +12,7 @@
 
 <meta name="author" content="Wei Liu" />
 
-<meta name="date" content="2022-01-07" />
+<meta name="date" content="2022-02-06" />
 
 <title>DR-SC: HCC1 Data Analysis</title>
 
@@ -318,14 +318,14 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">DR-SC: HCC1 Data Analysis</h1>
 <h4 class="author">Wei Liu</h4>
-<h4 class="date">2022-01-07</h4>
+<h4 class="date">2022-02-06</h4>
 
 
 
 <p>The package can be loaded with the command:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(<span class="st">&quot;DR.SC&quot;</span>)</a></code></pre></div>
-<div id="fit-dr-sc-using-real-data-crc" class="section level2">
-<h2>Fit DR-SC using real data CRC</h2>
+<div id="fit-dr-sc-using-real-data-hcc1" class="section level2">
+<h2>Fit DR-SC using real data HCC1</h2>
 <div id="load-the-data-hcc1-in-package-dr.sc" class="section level3">
 <h3>load the data HCC1 in package DR.SC</h3>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">data</span>(<span class="st">&quot;HCC1&quot;</span>, <span class="dt">package =</span> <span class="st">&#39;DR.SC&#39;</span>)</a></code></pre></div>
@@ -334,13 +334,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h3>Data preprocessing</h3>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">library</span>(Seurat)</a>
 <a class="sourceLine" id="cb3-2" title="2"><span class="co"># standard log-normalization</span></a>
-<a class="sourceLine" id="cb3-3" title="3">HCC1 &lt;-<span class="st"> </span><span class="kw">NormalizeData</span>(HCC1)</a>
+<a class="sourceLine" id="cb3-3" title="3">HCC1 &lt;-<span class="st"> </span><span class="kw">NormalizeData</span>(HCC1, <span class="dt">verbose =</span> F)</a>
 <a class="sourceLine" id="cb3-4" title="4"><span class="co"># choose 2000 highly variable features</span></a>
-<a class="sourceLine" id="cb3-5" title="5">seu &lt;-<span class="st"> </span><span class="kw">FindVariableFeatures</span>(HCC1, <span class="dt">nfeatures =</span> <span class="dv">1000</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb3-5" title="5">seu &lt;-<span class="st"> </span><span class="kw">FindVariableFeatures</span>(HCC1, <span class="dt">nfeatures =</span> <span class="dv">1000</span>, <span class="dt">verbose =</span> F)</a></code></pre></div>
 </div>
 </div>
-<div id="fit-dr-sc-model-using-2000-highly-variable-features" class="section level2">
-<h2>Fit DR-SC model using 2000 highly variable features</h2>
+<div id="fit-dr-sc-model-using-1000-highly-variable-features" class="section level2">
+<h2>Fit DR-SC model using 1000 highly variable features</h2>
 <p>We set the argument variable.type=‘HVGs’ (default option) to use the highly variable genes.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="co">### Given K</span></a>
 <a class="sourceLine" id="cb4-2" title="2">seu &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seu, <span class="dt">K=</span><span class="dv">6</span>, <span class="dt">platform =</span> <span class="st">&#39;Visium&#39;</span>,<span class="dt">nfeatures=</span><span class="dv">1000</span>, <span class="dt">variable.type =</span> <span class="st">&#39;HVGs&#39;</span>,<span class="dt">verbose=</span>F)</a></code></pre></div>
@@ -353,8 +353,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw">drscPlot</span>(seu, <span class="dt">visu.method =</span> <span class="st">&#39;UMAP&#39;</span>)</a></code></pre></div>
 </div>
 </div>
-<div id="fit-dr-sc-model-using-2000-spatially-variable-features" class="section level2">
-<h2>Fit DR-SC model using 2000 spatially variable features</h2>
+<div id="fit-dr-sc-model-using-1000-spatially-variable-features" class="section level2">
+<h2>Fit DR-SC model using 1000 spatially variable features</h2>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="co"># choose 2000 spatially variable features</span></a>
 <a class="sourceLine" id="cb8-2" title="2">seus &lt;-<span class="st"> </span><span class="kw">FindSVGs</span>(seu, <span class="dt">nfeatures =</span> <span class="dv">1000</span>)</a></code></pre></div>
 <p>We set the argument variable.type=‘SVGs’ (default option) to use the spatially variable genes.</p>
@@ -405,9 +405,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="heatmap-plot" class="section level3">
 <h3>Heatmap plot</h3>
 <p>Single cell heatmap of feature expression</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="co"># standard scaling (no regression)</span></a>
-<a class="sourceLine" id="cb18-2" title="2">seus &lt;-<span class="st"> </span><span class="kw">ScaleData</span>(seus)</a>
-<a class="sourceLine" id="cb18-3" title="3"><span class="kw">DoHeatmap</span>(<span class="kw">subset</span>(seus, <span class="dt">downsample =</span> <span class="dv">500</span>), <span class="dt">features =</span> genes, <span class="dt">size =</span> <span class="dv">5</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1">top20 &lt;-<span class="st">  </span>dat <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb18-2" title="2"><span class="st">  </span><span class="kw">group_by</span>(cluster) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb18-3" title="3"><span class="st">  </span><span class="kw">top_n</span>(<span class="dt">n =</span> <span class="dv">20</span>, <span class="dt">wt =</span> avg_log2FC)</a>
+<a class="sourceLine" id="cb18-4" title="4">genes &lt;-<span class="st"> </span>top20<span class="op">$</span>gene</a>
+<a class="sourceLine" id="cb18-5" title="5"><span class="co"># standard scaling (no regression)</span></a>
+<a class="sourceLine" id="cb18-6" title="6">seus &lt;-<span class="st"> </span><span class="kw">ScaleData</span>(seus)</a>
+<a class="sourceLine" id="cb18-7" title="7"><span class="kw">DoHeatmap</span>(<span class="kw">subset</span>(seus, <span class="dt">downsample =</span> <span class="dv">500</span>), <span class="dt">features =</span> genes, <span class="dt">size =</span> <span class="dv">5</span>)</a></code></pre></div>
 </div>
 </div>
 <div id="fit-dr-sc-model-using-2000-spatially-variable-features-and-using-mbic-to-determine-clusters" class="section level2">

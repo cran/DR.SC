@@ -202,20 +202,16 @@ gendata_RNAExp <- function(height=30, width=30, platform="ST", p =100, q=10, K=7
   Mu <- Mu - matrix(Ez, K, q, byrow=T) # center Z
   X <- Z %*% t(W) + MASS::mvrnorm(n, mu=rep(0,p), Sigma=diag(Lambda))
   
-  # svd_Sig <- svd(cov(Z))
-  # W12 <- W %*% svd_Sig$u %*% diag(sqrt(svd_Sig$d))
-  # signal <- sum(svd(W12)$d^2)
-  # snr <- sum(svd(W12)$d^2) / (sum(svd(W12)$d^2)+ sum(Lambda))
-  # 
+  
   
   
   # make position
   pos <- cbind(rep(1:height, width), rep(1:height, each=width))
-  #  make BayesSpace metadata used in BayesSpace-------------------------------------------------
+  
   counts <- t(X) - min(X)
   p <- ncol(X); n <- nrow(X)
-  rownames(counts) <- paste0("gene-", seq_len(p))
-  colnames(counts) <- paste0("spot-", seq_len(n))
+  rownames(counts) <- paste0("gene", seq_len(p))
+  colnames(counts) <- paste0("spot", seq_len(n))
   counts <- as.data.frame(exp(counts)-1)
   ## Make array coordinates - filled rectangle
   
@@ -235,6 +231,8 @@ gendata_RNAExp <- function(height=30, width=30, platform="ST", p =100, q=10, K=7
     # library(Seurat)
     ## Make SCE
     seu <-  CreateSeuratObject(counts= counts)
+  }else{
+    stop("gendata_RNAExp: Unsupported platform \"", platform, "\".")
   }
   
   seu$true_clusters <- y
@@ -306,33 +304,43 @@ readscRNAseq <- function(mtx, cells, features, ...){
 
 # Data prepocessing -------------------------------------------------------
 ## use SPARK to choose spatially variable genes
-FindSVGs <- function(seu, nfeatures=2000,num_core=1, verbose=TRUE){
+FindSVGs <- function(seu, nfeatures=2000, covariates=NULL, num_core=1, verbose=TRUE){
   
   if (!inherits(seu, "Seurat"))
     stop("method is only for Seurat objects")
   # require(SPARK)
   # require(Seurat)
-  sp_count <- seu@assays$RNA@counts
+  assy <- DefaultAssay(seu)
+  sp_count <- seu[[assy]]@counts
   if(nrow(sp_count)>5000){
     seu <- FindVariableFeatures(seu, nfeatures = 5000, verbose=verbose)
-    sp_count <- seu@assays$RNA@counts[seu@assays$RNA@var.features,]
+    sp_count <- seu[[assy]]@counts[seu[[assy]]@var.features,]
   }
   location <- as.data.frame(cbind(seu$row, seu$col))
   if(verbose){
     message("Find the spatially variables genes by SPARK-X...\n")
   }
-  sparkX <- sparkx(sp_count,location,numCores=num_core,option="mixture", verbose=verbose)
+  sparkX <- sparkx(sp_count,location, X_in = covariates, numCores=num_core, option="mixture",  verbose=verbose)
   if(nfeatures > nrow(sp_count)) nfeatures <- nrow(sp_count)
+  
+  ## Find top nfeatures smallest adjusted p-values
   order_nfeatures <- order(sparkX$res_mtest$adjustedPval)[1:nfeatures]
   genes <- row.names(sp_count)[order_nfeatures]
+  
+  ## Access the gene based on gene name 
   is.SVGs <- rep(FALSE, nrow(seu))
   order.SVGs <- rep(NA, nrow(seu))
-  names(is.SVGs) <- row.names(seu)
-  names(order.SVGs) <- row.names(seu)
-  order.SVGs[genes] <- order_nfeatures
+  adjusted.pval.SVGs <- rep(NA, nrow(seu))
+  names(is.SVGs) <- names(order.SVGs)<- names(adjusted.pval.SVGs) <- row.names(seu)
+  
+  order.SVGs[genes] <- 1:length(genes)
   is.SVGs[genes] <- TRUE
-  seu[['RNA']]@meta.features$is.SVGs <- is.SVGs
-  seu[['RNA']]@meta.features$order.SVGs <- order.SVGs
+  adjusted.pval.SVGs[genes] <- sparkX$res_mtest$adjustedPval[order_nfeatures]
+  
+  seu[[assy]]@meta.features$is.SVGs <- is.SVGs
+  seu[[assy]]@meta.features$order.SVGs <- order.SVGs
+  seu[[assy]]@meta.features$adjusted.pval.SVGs <- adjusted.pval.SVGs
+  seu[[assy]]@var.features <- genes
   seu
 }
 
@@ -340,8 +348,12 @@ topSVGs <- function(seu, ntop=5){
   if (!inherits(seu, "Seurat"))
     stop("method is only for Seurat objects")
   if(ntop > nrow(seu)) warning(paste0("Only ", nrow(seu), ' SVGs will be returned since the number of genes is less than ', ntop, '\n'))
-  SVGs <- row.names(seu)[seu@assays$RNA@meta.features$is.SVGs]
-  order_features <- seu[['RNA']]@meta.features$order.SVGs
+  assy <- DefaultAssay(seu)
+  if(is.null(seu[[assy]]@meta.features$is.SVGs)) 
+    stop("There is no information about SVGs in default Assay. Please use function FindSVGs first!")
+  
+  SVGs <- row.names(seu)[seu[[assy]]@meta.features$is.SVGs]
+  order_features <- seu[[assy]]@meta.features$order.SVGs
   
   idx <- order(order_features[!is.na(order_features)])[1:ntop]
   SVGs[idx]
@@ -368,7 +380,7 @@ DR.SC_fit <- function(X,Adj_sp=NULL, q=15, K= NULL,
   
   if(is.null(K)){
     message("Start chooing number of clusters...\n")
-    message("The candidate set is: ", K_set, '\n')
+    message("The candidate set is: ", paste0(K_set, " "), '\n')
     icMat <- selectClustNumber(X, Adj_sp, q, K_set= K_set, parallel=parallel, num_core = num_core, pen.const=pen.const)
     K_best <- K_set[which.min(icMat[,"mbic"])]
     message("The best number of cluster is: ", K_best, '\n')
@@ -406,24 +418,40 @@ DR.SC.Seurat <- function(seu, q=15, K=NULL, platform= "Visium",
     message('WARNING: nrow(seu) is less than nfeatures, so assign nfeatures with nrow(seu)!')
     nfeatures <- nrow(seu)
   }
-    
+  assy <- DefaultAssay(seu)
+  
   if(variable.type=='HVGs'){
-    if(is.null(seu@assays$RNA@var.features)){
+    message("Using HVGs to fit DR.SC model since variable.type=HVGs...")
+    if(is.null(seu[[assy]]@var.features)){
+      message("variable.type=='HVGs': but there is no highly variable gene in Seruat!")
+      message("FindVariableFeatures function is used to find the highly variable genes automatically.")
       seu <- FindVariableFeatures(seu, nfeatures = nfeatures)
     }
-    if(nfeatures > length(seu@assays$RNA@var.features)){
-      message('WARNING: number of variable genes is less than nfeatures, 
-              so assign nfeatures with number of variable genes!')
-      nfeatures <- length(seu@assays$RNA@var.features)
-    }
-    var.features <- seu@assays$RNA@var.features[1:nfeatures]
-  
   }else{
-    message("Using SVGs to fit DR.SC model since variable.type=SVGs...\n")
-    var.features <- row.names(seu)[seu[[DefaultAssay(seu)]]@meta.features$is.SVGs]
+    message("Using SVGs to fit DR.SC model since variable.type=SVGs...")
+    if(is.null(seu[[assy]]@meta.features$is.SVGs)){
+      message("variable.type=='SVGs': but there is no spatially variable gene in Seruat!")
+      message("FindSVGs function is used to find the spatially variable genes automatically.")
+      # var.features <- row.names(seu)[seu[[assy]]@meta.features$is.SVGs]
+      seu <- FindSVGs(seu, nfeatures = nfeatures)
+    } 
+     
   }
   
-  X <- Matrix::t(LogNormalize(seu@assays$RNA@counts[var.features,]))
+  
+  if(nfeatures > length(seu[[assy]]@var.features)){
+    message('WARNING: number of variable genes is less than nfeatures, 
+              so assign nfeatures with number of variable genes!')
+    nfeatures <- length(seu[[assy]]@var.features)
+  }
+  var.features <- seu[[assy]]@var.features[1:nfeatures]
+  
+  if(is.null(seu[[assy]]@data)){
+    X <- Matrix::t(LogNormalize(seu[[assy]]@counts[var.features,]))
+  }else{
+    X <- Matrix::t(seu[[assy]]@data[var.features, ])
+  }
+  
   
   resList <- DR.SC_fit(X,Adj_sp = Adj_sp, q=q, K=K,K_set =K_set, ...)
   if(is.null(K)){
@@ -454,7 +482,7 @@ simulDRcluster <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=s
   n <- nrow(X); p <- ncol(X)
   X <- scale(X, scale=FALSE)
   if(verbose){
-    message("-------------------Calculate inital values------------- \n")
+    message("-------------------Calculate inital values-------------")
   }
   
   # require(mclust)
@@ -468,7 +496,7 @@ simulDRcluster <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=s
   
   W0 <- princ$loadings
   hZ <- princ$PCs
-  mclus2 <- Mclust(hZ, G=K)
+  mclus2 <- Mclust(hZ, G=K, verbose=FALSE)
   toc_gmm <- proc.time() - tic
   
   y <- mclus2$classification
@@ -482,7 +510,7 @@ simulDRcluster <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=s
   Sigma0 <- mclus2$parameters$variance$sigma
   
   if(verbose){
-    message("-------------------Finish computing inital values------------- \n")
+    message("-------------------Finish computing inital values------------- ")
   }
   
   
@@ -495,7 +523,7 @@ simulDRcluster <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=s
   }
   
   if(verbose)
-    message("-------------------Starting  EM algortihm------------- \n")
+    message("-------------------Starting  ICM-EM algortihm-------------")
   if((!is.null(Adj_sp))){
     
     resList <- icmem_heterCpp(X, Adj_sp, y,  Mu0, W0, Sigma0,  Lam_vec0,
@@ -514,8 +542,8 @@ simulDRcluster <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=s
   
   toc_heter <- proc.time() - tic
   if(verbose) {
-    message("-------------------Complete!------------- \n")
-    message("elasped time is :", toc_heter, '\n')
+    message("-------------------Complete!-------------")
+    message("elasped time is :", round(toc_heter[3], 2))
   }
   resList$cluster_init <- y
   time_used <- c(toc_gmm[3], toc_heter[3])
@@ -632,13 +660,13 @@ getAdj.Seurat <- function(obj, platform ='Visium'){
     ## L1 radius of 1 (spots above, right, below, and left)
     offsets <- data.frame(x.offset=c( 0, 1, 0, -1),
                           y.offset=c(-1, 0, 1,  0))
-  }else if(tolower(platform) %in% c("seqfish", 'merfish', 'slide-seqv2', 'seqscope')){
+  }else if(tolower(platform) %in% c("seqfish", 'merfish', 'slide-seqv2', 'seqscope', 'hdst')){
     pos <- as.matrix(cbind(row=obj$row, col=obj$col))
     Adj_sp <- getAdj_auto(pos)
     
     return(Adj_sp)
   }else {
-    stop(".find_neighbors: Unsupported platform \"", platform, "\".")
+    stop("getAdj: Unsupported platform \"", platform, "\".")
   }
   
   ## Get array coordinates (and label by index of spot in SCE)
@@ -688,7 +716,7 @@ getAdj.Seurat <- function(obj, platform ='Visium'){
   }
   ij <- which(D != 0, arr.ind = T)
   
-  Adj_sp <- sparseMatrix(ij[,1], ij[,2], x = 1)
+  Adj_sp <- sparseMatrix(ij[,1], ij[,2], x = 1, dims=c(n, n))
   return(Adj_sp)
 }
 
@@ -761,7 +789,8 @@ find_neighbors <- function(pos, platform=c('ST', "Visium")) {
 getAdj_reg <- function(pos, platform ='Visisum'){
     # require(Matrix)
     ij <- find_neighbors(pos, platform)
-    Adj_sp <- sparseMatrix(ij[,1], ij[,2], x = 1)
+    n <- nrow(pos)
+    Adj_sp <- sparseMatrix(ij[,1], ij[,2], x = 1, dims=c(n, n))
     return(Adj_sp)
 }
 
@@ -769,10 +798,12 @@ getAdj_auto <- function(pos){
   if (!inherits(pos, "matrix"))
     stop("method is only for  matrix object!")
   
+  
   radius.lower <- 1
   radius.upper <- 50
   start.radius <- 1
   Med <- 0
+  message("Find the adjacency matrix by bisection method...")
   while(!(Med >= 4 && Med <=6)){ # ensure that each spot has about 4~6 neighborhoods in median.
     
     Adj_sp <- getneighborhood_fast(pos, radius=start.radius)
@@ -784,9 +815,10 @@ getAdj_auto <- function(pos){
       radius.upper <- start.radius
       start.radius <- (radius.lower + radius.upper)/2
     }
-    message("Current radius is ", start.radius, '\n')
-    message("Median of neighborhoods is ", Med, '\n')
+    message("Current radius is ", round(start.radius, 2))
+    message("Median of neighborhoods is ", Med)
   }
+  
   return(Adj_sp)
 }
 

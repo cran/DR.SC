@@ -13,10 +13,9 @@ knitr::opts_chunk$set(
 ## ----eval=FALSE---------------------------------------------------------------
 #  library(Seurat)
 #  # standard log-normalization
-#  HCC1 <- NormalizeData(HCC1)
+#  HCC1 <- NormalizeData(HCC1, verbose = F)
 #  # choose 2000 highly variable features
-#  seu <- FindVariableFeatures(HCC1, nfeatures = 1000)
-#  
+#  seu <- FindVariableFeatures(HCC1, nfeatures = 1000, verbose = F)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  ### Given K
@@ -59,15 +58,15 @@ knitr::opts_chunk$set(
 #    top_n(n = 2, wt = avg_log2FC)
 #  top2
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----eval=FALSE, fig.height=6, fig.width=10-----------------------------------
 #  genes <- top2$gene[seq(1, 12, by=2)]
 #  RidgePlot(seus, features = genes, ncol = 2)
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----eval=FALSE, fig.height=6, fig.width=10-----------------------------------
 #  
 #  VlnPlot(seus, features = genes, ncol=2)
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----eval=FALSE, fig.height=6, fig.width=10-----------------------------------
 #  seus <- RunTSNE(seus, reduction="dr-sc", reduction.key='drsc_tSNE_')
 #  FeaturePlot(seus, features = genes, reduction = 'tsne' ,ncol=2)
 #  
@@ -76,6 +75,10 @@ knitr::opts_chunk$set(
 #  DotPlot(seus, features = genes)
 
 ## ----eval=FALSE---------------------------------------------------------------
+#  top20 <-  dat %>%
+#    group_by(cluster) %>%
+#    top_n(n = 20, wt = avg_log2FC)
+#  genes <- top20$gene
 #  # standard scaling (no regression)
 #  seus <- ScaleData(seus)
 #  DoHeatmap(subset(seus, downsample = 500), features = genes, size = 5)

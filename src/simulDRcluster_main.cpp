@@ -132,33 +132,32 @@ double obj_beta(const arma::ivec& y, const arma::mat& R, const arma::sp_mat& Adj
   return -accu(R % Uy);
 }
 
-// [[Rcpp::export]]
-Rcpp::List runICM_sp (const arma::mat &X,  arma::ivec& y, const arma::mat& W0, const arma::vec& Lam_vec0, const arma::mat& Mu0,
+void runICM_sp (const arma::mat& X,  arma::ivec& y, const arma::mat& W0, const arma::vec& Lam_vec0, const arma::mat& Mu0,
                       const arma::cube& Sigma0,const arma::sp_mat& Adj, const arma::vec& alpha, const arma::vec& beta_grid,
-                      double beta, int maxIter_ICM)	{
+                      double& beta, int maxIter_ICM, mat& R, cube& Ez, cube& Cki_ara, double& loglik)	{
   // Target: estimate Y, evaluate R, Ez, Ck inverse, and update beta by using grid search.
   
   // basic info.
-  int n = X.n_rows, p=X.n_cols, K = Mu0.n_rows, q= Mu0.n_cols;
+  int n = X.n_rows, K = Mu0.n_rows, q= Mu0.n_cols;
   int iter, k;
   
   // two cached objects used for parameters update.
-  cube Cki_ara(q, q, K, fill::zeros), Ez(n,q,K, fill::zeros);
+  // cube Cki_ara(q, q, K, fill::zeros), Ez(n,q,K, fill::zeros);
   double  logdSk;
   vec mSk(n);
-  
+  mat WtLW = W0.t() * (repmat(1.0/ Lam_vec0, 1, q) %  W0); //O(p^2 q) cache object 
+  mat XLW = X * (repmat(1.0/ Lam_vec0, 1, q) % W0);
   // evaluate energy of x, Ux
   arma::mat Ux(n, K), Ck;
   for (k = 0; k < K; k++)	{
-    Ck = W0.t() * sp_mat(diagmat(1.0/ Lam_vec0)) * W0 +  inv(Sigma0.slice(k));
+    Ck = WtLW +  inv_sympd(Sigma0.slice(k));
     Cki_ara.slice(k) = Ck.i();
     multi_det_SkCpp2(X, Lam_vec0,W0, Ck, Mu0.row(k), Sigma0.slice(k), // Use SVD to speed up.
                     logdSk, mSk);
     // cout<<"dSk="<<exp(logdSk)<<"mSk=" <<mSk(0)<<endl;
     Ux.col(k) = -0.5*logdSk  + 0.5 * mSk; // calculate energy by column.
     
-    Ez.slice(k) = (X * (repmat(1.0/ Lam_vec0, 1, q) % W0) + 
-      repmat(Mu0.row(k)*inv(Sigma0.slice(k)), n, 1)) * Ck.i();
+    Ez.slice(k) = (XLW + repmat(Mu0.row(k)* inv_sympd(Sigma0.slice(k)), n, 1)) * Ck.i();
   }
   
   // Estimate Y by ICM
@@ -192,18 +191,13 @@ Rcpp::List runICM_sp (const arma::mat &X,  arma::ivec& y, const arma::mat& W0, c
     }
   }
   
-  // if (iter == maxIter_ICM) {
-  //   Iteration = iter - 1;
-  // } else {
-  //   Iteration = iter;
-  // }
   
   // calculate R and pseudo observed loglikelihood
   vec maxA1 = max(-U, 1);
   U = (-U - repmat(maxA1, 1, K));
   vec loglik_more_vec = sum(exp(U),1);
-  double loglik = sum(log(loglik_more_vec) + maxA1) - n* p /2.0 * log(2* M_PI); 
-  arma::mat R = exp(U) / repmat(loglik_more_vec, 1, K);
+  loglik = sum(log(loglik_more_vec) + maxA1); //  - n* p /2.0 * log(2* M_PI); 
+  R = exp(U) / repmat(loglik_more_vec, 1, K);
   
   
   // vec energy = Energy.subvec(1, Iteration);
@@ -214,16 +208,18 @@ Rcpp::List runICM_sp (const arma::mat &X,  arma::ivec& y, const arma::mat& W0, c
   for(k=0; k < ng_beta; ++k){
     objBetaVec(k) = obj_beta(y, R, Adj, K, alpha, beta_grid(k));
   }
+  beta = beta_grid(index_max(objBetaVec));
   
-  List output = List::create(
-    Rcpp::Named("y") = y,
-    Rcpp::Named("R") = R,
-    Rcpp::Named("Ez") = Ez,
-    Rcpp::Named("Cki_ara") = Cki_ara,
-    Rcpp::Named("loglik") = loglik,
-    Rcpp::Named("hbeta") = beta_grid(index_max(objBetaVec))); // get the maximum beta.
   
-  return output; 
+  // List output = List::create(
+  //   Rcpp::Named("y") = y,
+  //   Rcpp::Named("R") = R,
+  //   Rcpp::Named("Ez") = Ez,
+  //   Rcpp::Named("Cki_ara") = Cki_ara,
+  //   Rcpp::Named("loglik") = loglik,
+  //   Rcpp::Named("hbeta") = beta_grid(index_max(objBetaVec))); // get the maximum beta.
+  
+  // return output; 
   
 }  
 
@@ -233,9 +229,9 @@ Rcpp:: List icmem_heterCpp(const arma::mat& X,const arma::sp_mat& Adj, const arm
   W_int, const arma::cube& Sigma_int, const  arma::vec& Lam_vec_int,
   const arma::vec& alpha, const double& beta_int, const arma::vec& beta_grid,const int& maxIter_ICM, 
   const int& maxIter, const double& epsLogLik, const int& verbose,const bool& homo = false, const bool& diagSigmak = false){
-  // To ensure convergence, beta_int should belongs to beta_grid.
-  // basic info
-  int K = Mu_int.n_rows;
+  
+  // basic information
+  int n = X.n_rows, K = Mu_int.n_rows, q= Mu_int.n_cols;
   
   
   // Initialize the  iterative parameters
@@ -252,25 +248,23 @@ Rcpp:: List icmem_heterCpp(const arma::mat& X,const arma::sp_mat& Adj, const arm
   
   // Define the variables that will be used in algorithm
   // variables usded in eavluating R.
-  // cube Cki_ara(q, q, K, fill::zeros), Ez(n,q,K, fill::zeros);
-  // mat  R(n,K, fill::zeros);
+  cube Cki_ara(q, q, K, fill::zeros), Ez(n,q,K, fill::zeros);
+  mat  R(n,K, fill::zeros);
   int k, iter;
+  double loglikVal =0.0;
   
-  List ICM_fit;
+  
   // begin algorithm
   for(iter = 1; iter < maxIter; iter++){
     
     
     // estimate Y, update beta, and cache some objects
     // cout<<"Start computing ICM algorithm"<<endl;
-    ICM_fit = runICM_sp(X, y, W0, Lam_vec0, Mu0,Sigma0,Adj,alpha, beta_grid,beta0, maxIter_ICM);
-    // ivec yHat = ICM_fit["y"]; 
-    // y = yHat;
-    loglik(iter) = ICM_fit["loglik"];
-    mat R = ICM_fit["R"];
-    cube Ez = ICM_fit["Ez"];
-    cube Cki_ara = ICM_fit["Cki_ara"];
-    beta0 = ICM_fit["hbeta"];
+    runICM_sp(X, y, W0, Lam_vec0, Mu0,Sigma0,Adj,alpha, beta_grid,beta0, maxIter_ICM,
+                        R, Ez, Cki_ara, loglikVal);
+    
+    loglik(iter) = loglikVal;
+    
     
     // cout<< R << Ez << Cki_ara << beta0 <<endl;
     // compute Q(theta^t; theta^t)
@@ -333,15 +327,15 @@ Rcpp:: List icmem_heterCpp(const arma::mat& X,const arma::sp_mat& Adj, const arm
   
   // output return value
   
-  int n = X.n_rows;
-  int p = X.n_cols;
-  int q = Mu_int.n_cols;
   
-  mat R = ICM_fit["R"]; // R's existence is temporary, so we require to redefine it.
-  cube Ez = ICM_fit["Ez"]; // Ez is also the problem.
+  
+  
+  // mat R = ICM_fit["R"]; // R's existence is temporary, so we require to redefine it.
+  // cube Ez = ICM_fit["Ez"]; // Ez is also the problem.
+  // Evalute the posterior expectation of z.
+  
   mat Ezz(n, q, fill::zeros); // estimate Z, factor matrix
   for(k=0; k<K; k++){
-    
     Ezz +=  Ez.slice(k) % repmat(R.col(k), 1, q);
   }
   
@@ -361,18 +355,56 @@ Rcpp:: List icmem_heterCpp(const arma::mat& X,const arma::sp_mat& Adj, const arm
 }
 
 
+
 // without considering the spatial information
+void runEstep(const arma::mat& X,  const arma::mat& W0, const arma::vec& Lam_vec0, const arma::mat& Mu0,
+                const arma::cube& Sigma0, const arma::vec& Pi0,  mat& R, cube& Ez, cube& Cki_ara, double& loglik)	{
+  // Target: estimate Y, evaluate R, Ez, Ck inverse, and update beta by using grid search.
+  
+  // basic info.
+  int n = X.n_rows, p=X.n_cols, K = Mu0.n_rows, q= Mu0.n_cols;
+  int k;
+  
+  // two cached objects used for parameters update.
+  // cube Cki_ara(q, q, K, fill::zeros), Ez(n,q,K, fill::zeros);
+  double  logdSk;
+  vec mSk(n);
+  vec maxA1(n,fill::zeros);
+  vec loglik_more_vec =maxA1;
+  
+  mat WtLW = W0.t() * (repmat(1.0/ Lam_vec0, 1, q) %  W0); //O(p^2 q) cache object 
+  mat XLW = X * (repmat(1.0/ Lam_vec0, 1, q) % W0);
+  // evaluate energy of x, Ux
+  arma::mat A1(n, K), Ck;
+  for (k = 0; k < K; k++)	{
+    Ck = WtLW +  inv_sympd(Sigma0.slice(k));
+    Cki_ara.slice(k) = Ck.i();
+    multi_det_SkCpp2(X, Lam_vec0,W0, Ck, Mu0.row(k), Sigma0.slice(k), // Use SVD to speed up.
+                     logdSk, mSk);
+    // cout<<"dSk="<<exp(logdSk)<<"mSk=" <<mSk(0)<<endl;
+    A1.col(k) = log(Pi0(k)) + 0.5*logdSk  -0.5 * mSk;
+    
+    Ez.slice(k) = (XLW + repmat(Mu0.row(k)* inv_sympd(Sigma0.slice(k)), n, 1)) * Ck.i();
+  }
+  
+  
+  // calculate R and pseudo observed loglikelihood
+  maxA1 = max(A1, 1);
+  A1 = (A1 - repmat(maxA1, 1, K));
+  loglik_more_vec = sum(exp(A1),1);
+  loglik = sum(log(loglik_more_vec) + maxA1) - n* p /2.0 * log(2* M_PI); 
+  R = exp(A1) / repmat(loglik_more_vec, 1, K);
+ 
+}  
+
 // [[Rcpp::export]]
 Rcpp:: List EMmPCpp_heter(const arma::mat& X, const arma::vec& Pi_int, const arma::mat& Mu_int, const arma::mat&
   W_int, const arma::cube& Sigma_int, const  arma::vec& Lam_vec_int,
   const int& maxIter, const double& epsLogLik, const bool& verbose, 
   const bool& homo = false, const bool& diagSigmak = false){
   // basic info
-  int p = X.n_cols;
-  int n = X.n_rows;
-  int K = Mu_int.n_rows;
-  int q = Mu_int.n_cols;
-  
+  int  n = X.n_rows, K = Mu_int.n_rows, q = Mu_int.n_cols; // p = X.n_cols,
+  int iter, k;
   // Initialize the  iterative parameters
   mat Mu0(Mu_int), W0(W_int);
   vec Pi0(Pi_int), Lam_vec0(Lam_vec_int);
@@ -382,53 +414,43 @@ Rcpp:: List EMmPCpp_heter(const arma::mat& X, const arma::vec& Pi_int, const arm
   // But this can be solved by some programming tricks.
   vec loglik(maxIter);
   loglik(0) = INT_MIN;
-  vec maxA1(n,fill::zeros);
-  vec loglik_more_vec =maxA1;
   
   // Define the variables that will be used in algorithm
-  // variables usded in updating Pi0
-  double  logdSk;
-  cube Cki_ara(q, q, K, fill::zeros);
-  mat Sk(p,p, fill::zeros);
-  mat A1(n,K, fill::zeros), Ck(q,q, fill::zeros);
-  mat  R(A1);
-  vec mSk(n);
-  int k, iter;
+  // vec mSk(n); double  logdSk; //mat A1(n,K, fill::zeros), Ck(q,q, fill::zeros);
+  cube Cki_ara(q, q, K, fill::zeros), Ez(n,q,K, fill::zeros);
+  mat  R(n, K, fill::zeros);
+  double loglikVal =0.0;
   
-  // variables usded in updating Mu0
-  cube Ez(n,q,K, fill::zeros);
-  
-  // cout<<"start EM algorithm in CPP::"<<endl;
-  // begin algorithm
+  // begin EM algorithm
   for(iter = 1; iter < maxIter; iter++){
     
     
     // cache some objects
     
     // compute loglikelihood
-    for(k=0; k<K; k++){
-      
-      Ck = W0.t() * sp_mat(diagmat(1.0/ Lam_vec0)) * W0 +  inv(Sigma0.slice(k));
-      Cki_ara.slice(k) = Ck.i();
-      multi_det_SkCpp2(X, Lam_vec0,W0, Ck, Mu0.row(k), Sigma0.slice(k),
-                      logdSk, mSk);
-      // cout<<"dSk="<<exp(logdSk)<<"mSk=" <<mSk(0)<<endl;
-      A1.col(k) = log(Pi0(k)) + 0.5*logdSk  -0.5 * mSk;
-      
-      Ez.slice(k) = (X * (repmat(1.0/ Lam_vec0, 1, q) % W0) + 
-        repmat(Mu0.row(k)*inv(Sigma0.slice(k)), n, 1)) * Ck.i();
-      
-    } 
-    maxA1 = max(A1, 1);
-    A1 = (A1 - repmat(maxA1, 1, K));
-    loglik_more_vec = sum(exp(A1),1);
-    loglik(iter) = sum(log(loglik_more_vec) + maxA1) - n* p /2.0 * log(2* M_PI); 
-    R = exp(A1) / repmat(loglik_more_vec, 1, K);
+    // for(k=0; k<K; k++){
+    //   
+    //   Ck = W0.t() * (repmat(1.0/ Lam_vec0, 1, q) %  W0) +  inv_sympd(Sigma0.slice(k));
+    //   Cki_ara.slice(k) = Ck.i();
+    //   multi_det_SkCpp2(X, Lam_vec0,W0, Ck, Mu0.row(k), Sigma0.slice(k),
+    //                   logdSk, mSk);
+    //   // cout<<"dSk="<<exp(logdSk)<<"mSk=" <<mSk(0)<<endl;
+    //   A1.col(k) = log(Pi0(k)) + 0.5*logdSk  -0.5 * mSk;
+    //   
+    //   Ez.slice(k) = (X * (repmat(1.0/ Lam_vec0, 1, q) % W0) + 
+    //     repmat(Mu0.row(k)*inv_sympd(Sigma0.slice(k)), n, 1)) * Ck.i();
+    //   
+    // } 
+    // maxA1 = max(A1, 1);
+    // A1 = (A1 - repmat(maxA1, 1, K));
+    // loglik_more_vec = sum(exp(A1),1);
+    // loglik(iter) = sum(log(loglik_more_vec) + maxA1) - n* p /2.0 * log(2* M_PI); 
+    // R = exp(A1) / repmat(loglik_more_vec, 1, K);
     // cout<<"Finish R computing in CPP::"<<endl;
-    
+    runEstep(X,  W0, Lam_vec0,  Mu0, Sigma0, Pi0,  R, Ez, Cki_ara, loglikVal);
+    loglik(iter) = loglikVal;
     
     // compute Q(theta^t; theta^t)
-    
     // double Q0 = Q_fun(X, R, Ez,Cki_ara, W0, Mu0, Sigma0, Pi0, Lam_vec0);
     
     // update Pi0
@@ -487,7 +509,6 @@ Rcpp:: List EMmPCpp_heter(const arma::mat& X, const arma::vec& Pi_int, const arm
   
   mat Ezz(n, q, fill::zeros); // estimate Z, factor matrix
   for(k=0; k<K; k++){
-    
     Ezz +=  Ez.slice(k) % repmat(R.col(k), 1, q);
   }
   

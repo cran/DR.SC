@@ -5,9 +5,6 @@ knitr::opts_chunk$set(
 )
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  library("DR.SC")
-
-## ----eval=FALSE---------------------------------------------------------------
 #  seu <- gendata_RNAExp(height=30, width=30,p=500, K=4)
 #  head(seu@meta.data)
 
@@ -16,7 +13,7 @@ knitr::opts_chunk$set(
 #  library(Seurat)
 #  seu <- NormalizeData(seu)
 #  # choose 2000 variable features using Seurat
-#  seu <- FindVariableFeatures(seu, nfeatures = 2000)
+#  seu <- FindVariableFeatures(seu, nfeatures = 400)
 #  seu2 <- DR.SC(seu, K=4, platform = 'ST', verbose=F)
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -36,15 +33,42 @@ knitr::opts_chunk$set(
 #  mbicPlot(seu2)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  genes <- c("gene-24","gene-68", "gene-95","gene-55")
+#  ### Given K
+#  seu <- NormalizeData(seu, verbose=F)
+#  # choose 400 spatially variable features using FindSVGs
+#  seus <- FindSVGs(seu, nfeatures = 400, verbose = F)
+#  seu2 <- DR.SC(seus, K=4, platform = 'ST',variable.type='SVGs', verbose=F)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  mclust::adjustedRandIndex(seu2$spatial.drsc.cluster, seu$true_clusters)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  spatialPlotClusters(seu2)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  drscPlot(seu2)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  drscPlot(seu2, visu.method = 'UMAP')
+
+## ----eval=FALSE---------------------------------------------------------------
+#  seu2 <- DR.SC(seus, q=10, K=NULL, K_set =2:6, platform = 'ST', variable.type='SVGs', verbose=F)
+#  mbicPlot(seu2)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  dat <- FindAllMarkers(seu2)
+#  suppressPackageStartupMessages(library(dplyr) )
+#  # Find the top 1 marker genes, user can change n to access more marker genes
+#  dat %>%group_by(cluster) %>%
+#      top_n(n = 1, wt = avg_log2FC) -> top
+#  genes <- top$gene
 #  RidgePlot(seu2, features = genes, ncol = 2)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  
 #  VlnPlot(seu2, features = genes, ncol=2)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  seu2 <- RunTSNE(seu2, reduction="dr-sc", reduction.key='drsc_tSNE_')
+#  seu2 <- RunTSNE(seu2, reduction="dr-sc", reduction.key='drsctSNE_')
 #  FeaturePlot(seu2, features = genes, reduction = 'tsne' ,ncol=2)
 #  
 
@@ -53,8 +77,15 @@ knitr::opts_chunk$set(
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  # standard scaling (no regression)
-#  seu2 <- ScaleData(seu2)
-#  DoHeatmap(subset(seu2, downsample = 500), features = genes, size = 5)
+#  dat %>%group_by(cluster) %>%
+#      top_n(n = 30, wt = avg_log2FC) -> top
+#  ### select the marker genes that are also the variable genes.
+#  
+#  genes <- intersect(top$gene, seu2[['RNA']]@var.features)
+#  ## Change the HVGs to SVGs
+#  #  <- topSVGs(seu2, 400)
+#  seu2 <- ScaleData(seu2, verbose = F)
+#  DoHeatmap(subset(seu2, downsample = 500),features = genes, size = 5)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  sessionInfo()
