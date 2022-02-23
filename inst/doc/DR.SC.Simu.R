@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 #  seu <- NormalizeData(seu)
 #  # choose 2000 variable features using Seurat
 #  seu <- FindVariableFeatures(seu, nfeatures = 400)
-#  seu2 <- DR.SC(seu, K=4, platform = 'ST', verbose=F)
+#  seu2 <- DR.SC(seu, K=4, platform = 'ST',  verbose=F)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  mclust::adjustedRandIndex(seu2$spatial.drsc.cluster, seu$true_clusters)
@@ -29,7 +29,7 @@ knitr::opts_chunk$set(
 #  drscPlot(seu2, visu.method = 'UMAP')
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  seu2 <- DR.SC(seu, q=10, K=NULL, K_set =2:6, platform = 'ST', verbose=F)
+#  seu2 <- DR.SC(seu, q=10, K=2:6, platform = 'ST', verbose=F)
 #  mbicPlot(seu2)
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -37,7 +37,7 @@ knitr::opts_chunk$set(
 #  seu <- NormalizeData(seu, verbose=F)
 #  # choose 400 spatially variable features using FindSVGs
 #  seus <- FindSVGs(seu, nfeatures = 400, verbose = F)
-#  seu2 <- DR.SC(seus, K=4, platform = 'ST',variable.type='SVGs', verbose=F)
+#  seu2 <- DR.SC(seus, K=4, platform = 'ST', verbose=F)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  mclust::adjustedRandIndex(seu2$spatial.drsc.cluster, seu$true_clusters)
@@ -52,7 +52,13 @@ knitr::opts_chunk$set(
 #  drscPlot(seu2, visu.method = 'UMAP')
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  seu2 <- DR.SC(seus, q=10, K=NULL, K_set =2:6, platform = 'ST', variable.type='SVGs', verbose=F)
+#  seu2 <- DR.SC(seus, q=10, K=2:6, platform = 'ST',  verbose=F)
+#  mbicPlot(seu2)
+#  # or plot BIC or AIC
+#  # mbicPlot(seu2, criteria = 'BIC')
+#  # mbicPlot(seu2, criteria = 'AIC')
+#  # tune pen.const
+#  seu2 <- selectModel(seu2, pen.const = 0.7)
 #  mbicPlot(seu2)
 
 ## ----eval=FALSE---------------------------------------------------------------

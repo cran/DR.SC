@@ -8,18 +8,18 @@ knitr::opts_chunk$set(
 #  library("DR.SC")
 
 ## ----eval=FALSE,message=FALSE, warning=FALSE----------------------------------
-#  data("HCC1", package = 'DR.SC')
+#  data("dlpfc151510", package = 'DR.SC')
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  library(Seurat)
 #  # standard log-normalization
-#  HCC1 <- NormalizeData(HCC1, verbose = F)
-#  # choose 2000 highly variable features
-#  seu <- FindVariableFeatures(HCC1, nfeatures = 1000, verbose = F)
+#  dlpfc151510 <- NormalizeData(dlpfc151510, verbose = F)
+#  # choose 500 highly variable features
+#  seu <- FindVariableFeatures(dlpfc151510, nfeatures = 500, verbose = F)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  ### Given K
-#  seu <- DR.SC(seu, K=6, platform = 'Visium',nfeatures=1000, variable.type = 'HVGs',verbose=F)
+#  seu <- DR.SC(seu, K=7, platform = 'Visium', verbose=F)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  spatialPlotClusters(seu)
@@ -31,13 +31,12 @@ knitr::opts_chunk$set(
 #  drscPlot(seu, visu.method = 'UMAP')
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  # choose 2000 spatially variable features
-#  seus <- FindSVGs(seu, nfeatures = 1000)
+#  # choose 480 spatially variable features
+#  seus <- FindSVGs(seu, nfeatures = 480)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  ### Given K
-#  seus <- DR.SC(seus, K=6, platform = 'Visium', nfeatures=1000,
-#                variable.type='SVGs', verbose=T)
+#  seus <- DR.SC(seus, K=7, platform = 'Visium', verbose=T)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  spatialPlotClusters(seus)
@@ -49,7 +48,7 @@ knitr::opts_chunk$set(
 #  drscPlot(seus, visu.method = 'UMAP')
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  SVGs <- topSVGs(seus, ntop = 1000)
+#  SVGs <- topSVGs(seus, ntop = 400)
 #  dat <- FindAllMarkers(seus, features = SVGs)
 #  head(dat)
 #  library(dplyr, verbose=F)
@@ -62,11 +61,11 @@ knitr::opts_chunk$set(
 #  genes <- top2$gene[seq(1, 12, by=2)]
 #  RidgePlot(seus, features = genes, ncol = 2)
 
-## ----eval=FALSE, fig.height=6, fig.width=10-----------------------------------
+## ----eval=FALSE, fig.height=8, fig.width=10-----------------------------------
 #  
 #  VlnPlot(seus, features = genes, ncol=2)
 
-## ----eval=FALSE, fig.height=6, fig.width=10-----------------------------------
+## ----eval=FALSE, fig.height=8, fig.width=10-----------------------------------
 #  seus <- RunTSNE(seus, reduction="dr-sc", reduction.key='drsc_tSNE_')
 #  FeaturePlot(seus, features = genes, reduction = 'tsne' ,ncol=2)
 #  
@@ -74,7 +73,7 @@ knitr::opts_chunk$set(
 ## ----eval=FALSE---------------------------------------------------------------
 #  DotPlot(seus, features = genes)
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----eval=FALSE, fig.height=8, fig.width=10-----------------------------------
 #  top20 <-  dat %>%
 #    group_by(cluster) %>%
 #    top_n(n = 20, wt = avg_log2FC)
@@ -85,13 +84,14 @@ knitr::opts_chunk$set(
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  # choose 2000 spatially variable features
-#  seus <- FindSVGs(seu, nfeatures = 2000, verbose = F)
+#  seus <- FindSVGs(seu, nfeatures = 480, verbose = F)
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  ### Given K
-#  seus <- DR.SC(seus, K_set=3:8, platform = 'Visium', variable.type='SVGs', verbose=F)
+#  seus <- DR.SC(seus, K=3:9, platform = 'Visium', verbose=F)
 
 ## ----eval=FALSE---------------------------------------------------------------
+#  seus <- selectModel(seus, pen.const = 0.8)
 #  mbicPlot(seus)
 
 ## ----eval=FALSE---------------------------------------------------------------
