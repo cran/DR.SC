@@ -47,8 +47,8 @@ public:
 		this->Sigma0 = Sigma0;
 		this->W0 = W0;
 		this->Lam_vec0 = Lam_vec0;
-        this->Pi0 = Pi0;
-        this->maxIter_ICM = maxIter_ICM;
+      this->Pi0 = Pi0;
+        // this->maxIter_ICM = maxIter_ICM;
         this->maxIter = maxIter;
         this->epsLogLik = epsLogLik;
         this->verbose = verbose;
