@@ -1,8 +1,8 @@
-d748da7734fe3e62ab6f4f81104adda2 *DESCRIPTION
+d7c7d769fe9b945d2a81f69ccd91b75d *DESCRIPTION
 98ee2286047d341f8627b41e4aff6d5f *NAMESPACE
 92e58b462ae21c713bf759993ea1d678 *R/RcppExports.R
 38d2ae92cf7df25e1c99989c7b0f076d *R/main.R
-bc97ad256983283f58ae06e66849591d *R/sparkx.R
+301bf9037768bcb69a3147239c6da657 *R/sparkx.R
 12ea77bb8cbd6944f5f40b9a64760e50 *R/visualizationR.R
 0b42bc0248c2cc481ae3e0fcb27d3d05 *R/zzz.R
 a57cb223034f2e801871e2c07aa4570d *README.md
@@ -14,10 +14,10 @@ dd724f1e45b18f099a52dbb51c86f6fb *inst/doc/DR-SC.Rmd
 3db2688bc5c05b00c2bb630c24a0d5f0 *inst/doc/DR-SC.html
 b762fa16c71ca2c4b036a202169fbf1a *inst/doc/DR.SC.HCC1.R
 f16b727ce534ad04c9b2b657dab5445c *inst/doc/DR.SC.HCC1.Rmd
-b388803d3e7eb38f8739dda676b41c0f *inst/doc/DR.SC.HCC1.html
+d760b350e06f36e94ab93cb1a41dd9d6 *inst/doc/DR.SC.HCC1.html
 39367c20af4a971e89e32cd98eaa75db *inst/doc/DR.SC.Simu.R
 7765a388530ed663a41f7c7e452a6ac1 *inst/doc/DR.SC.Simu.Rmd
-603571c737c2e57d2aa8121baeb4d3ee *inst/doc/DR.SC.Simu.html
+8ea13a629ef273be4ec2f3a30f72269c *inst/doc/DR.SC.Simu.html
 588c7adb1d5e7b20a77fd7794fa2ce07 *man/DR.SC.Rd
 a613020fd3f3fd5154029a6634f21447 *man/DR.SC.fit.Rd
 7725e8cf2f59ab3b6eac4d0613ad36b3 *man/FindSVGs.Rd
