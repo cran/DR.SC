@@ -13,8 +13,11 @@ knitr::opts_chunk$set(
 #  ### Given K
 #  library(Seurat)
 #  seu <- NormalizeData(seu)
-#  # choose 2000 variable features using Seurat
+#  # choose highly variable features using Seurat
 #  seu <- FindVariableFeatures(seu, nfeatures = 400)
+
+## ----eval = FALSE-------------------------------------------------------------
+#  ### Given K
 #  seu2 <- DR.SC(seu, K=4, platform = 'ST',  verbose=F)
 
 ## ----eval = FALSE-------------------------------------------------------------

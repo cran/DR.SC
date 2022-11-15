@@ -2,6 +2,8 @@
 # usethis::use_data(HCC1)
 # Run to build the website
 # pkgdown::build_site()
+# DR.SC_3.0.tar.gz
+
 ### Generate data without spatial dependence.
 gendata_noSp <- function(n=100, p =100, q=15, K = 8,  alpha=10, sigma2=1, seed=1){
   
@@ -366,7 +368,7 @@ topSVGs <- function(seu, ntop=5){
 DR.SC_fit <- function(X, K, Adj_sp=NULL, q=15,
                             error.heter= TRUE, beta_grid=seq(0.5, 5, by=0.5),
                             maxIter=25, epsLogLik=1e-5, verbose=FALSE, maxIter_ICM=6,
-                            wpca.int=FALSE, coreNum = 5){
+                            wpca.int=FALSE,int.model="EEE", approxPCA=FALSE,  coreNum = 5){
   if (!(inherits(X, "dgCMatrix") || inherits(X, "matrix")))
     stop("X must be dgCMatrix object or matrix object")
   if(is.null(colnames(X))) colnames(X) <- paste0('gene', 1:ncol(X))
@@ -382,20 +384,22 @@ DR.SC_fit <- function(X, K, Adj_sp=NULL, q=15,
   resList <- drsc(X,Adj_sp = Adj_sp, q=q, K=K, error.heter= error.heter, 
                   beta_grid=beta_grid,maxIter=maxIter, epsLogLik=epsLogLik,
                   verbose=verbose, maxIter_ICM=maxIter_ICM,
-                  alpha=FALSE, wpca.int=wpca.int, diagSigmak=FALSE, coreNum =coreNum)
+                  alpha=FALSE, wpca.int=wpca.int, diagSigmak=FALSE, int.model=int.model,
+                  approxPCA=approxPCA, coreNum =coreNum)
   message("Finish DR-SC model fitting\n")
   
   return(resList)
 }
-DR.SC <- function(seu, K, q=15,  platform= "Visium", ...) {
+DR.SC <- function(seu, K, q=15,  platform= c('Visium', "ST", "Other_SRT", "scRNAseq"), ...) {
   UseMethod("DR.SC")
 }
   
-DR.SC.Seurat <- function(seu, K, q=15,  platform= "Visium", ...){
+DR.SC.Seurat <- function(seu, K, q=15,  platform= c('Visium', "ST", "Other_SRT", "scRNAseq"), ...){
   # require(Seurat)
   if (!inherits(seu, "Seurat"))
     stop("method is only for Seurat objects")
   
+  platform <- match.arg(platform)
   if(platform == 'scRNAseq'){
     Adj_sp <- NULL
   }else{
@@ -462,7 +466,8 @@ extractInfModel <- function(resList){
 ### to evaluate Z and y in multi-K.
 drsc <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=seq(0.5, 5, by=0.5),
                            maxIter=30, epsLogLik=1e-5, verbose=FALSE, maxIter_ICM=6,
-                           alpha=FALSE, wpca.int=TRUE, diagSigmak=FALSE, coreNum = 5){
+                           alpha=FALSE, wpca.int=TRUE, diagSigmak=FALSE, int.model="EEE",
+                 approxPCA=FALSE, coreNum = 5){
   
   n <- nrow(X); p <- ncol(X)
   X <- scale(X, scale=FALSE)
@@ -472,7 +477,14 @@ drsc <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=seq(0.5, 5,
   
   
   tic <- proc.time()
-  princ <- wpca(X, q, weighted=wpca.int)
+  if(approxPCA){
+    message("Using approxmated PCA to obtain initial values")
+    princ <- approxPCA(X, q)
+  }else{
+    message("Using accurate PCA to obtain initial values")
+    princ <- wpca(X, q, weighted=wpca.int)
+  }
+  
   if(error.heter){
     Lam_vec0 <- princ$Lam_vec
   }else{
@@ -495,10 +507,10 @@ drsc <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=seq(0.5, 5,
     }else{
       cl <- makeCluster(num_core)
     }
-    intList <- parLapply(cl, X=K, parfun_int, Z=hZ, alpha=alpha)
+    intList <- parLapply(cl, X=K, parfun_int, Z=hZ, alpha=alpha,int.model=int.model)
     stopCluster(cl)
   }else{
-    intList <- list(parfun_int(K, hZ, alpha))
+    intList <- list(parfun_int(K, hZ, alpha, int.model=int.model))
   }
   
   
@@ -559,15 +571,17 @@ drsc <- function(X,Adj_sp = NULL, q, K, error.heter= TRUE, beta_grid=seq(0.5, 5,
 
 
 
-mycluster <- function(Z, G){
+mycluster <- function(Z, G, int.model='EEE'){
   
-  mclus2 <- Mclust(Z, G=G, verbose=FALSE)
+  mclus2 <- Mclust(Z, G=G, modelNames=int.model,verbose=FALSE)
   return(mclus2)
 }
 
-parfun_int <- function(k, Z,  alpha){
+parfun_int <- function(k, Z,  alpha, int.model='EEE'){
   
-  mclus2 <- mycluster(Z, k)
+ 
+  mclus2 <- mycluster(Z, k, int.model)
+   
   yveck <- mclus2$classification
   
   if(alpha){
@@ -667,27 +681,29 @@ selectModel.Seurat <- function(obj,  criteria = 'MBIC', pen.const=1){
   return(obj)
 }
 
-getAdj <- function(obj,platform ='Visium') UseMethod("getAdj")
+getAdj <- function(obj, platform = c('Visium', "ST", "Other_SRT"), ...) UseMethod("getAdj")
 
-getAdj.Seurat <- function(obj, platform ='Visium'){
+getAdj.Seurat <- function(obj, platform = c('Visium', "ST", "Other_SRT"), ...){
   
   if (!inherits(obj, "Seurat"))
     stop("method is only for Seurat or matrix objects")
   # require(Matrix)
-  if (platform == "Visium") {
+  
+  platform <- match.arg(platform)
+  if (tolower(platform) == "visium") {
     ## Spots to left and right, two above, two below
     offsets <- data.frame(x.offset=c(-2, 2, -1,  1, -1, 1),
                           y.offset=c( 0, 0, -1, -1,  1, 1))
-  } else if (platform == "ST") {
+  } else if (tolower(platform) == "st") {
     ## L1 radius of 1 (spots above, right, below, and left)
     offsets <- data.frame(x.offset=c( 0, 1, 0, -1),
                           y.offset=c(-1, 0, 1,  0))
-  }else if(tolower(platform) %in% c("seqfish", 'merfish', 'slide-seqv2', 'seqscope', 'hdst')){
+  }else if(tolower(platform) == 'other_srt'){
     pos <- as.matrix(cbind(row=obj$row, col=obj$col))
-    Adj_sp <- getAdj_auto(pos)
+    Adj_sp <- getAdj_auto(pos, ...)
     
     return(Adj_sp)
-  }else {
+  }else{
     stop("getAdj: Unsupported platform \"", platform, "\".")
   }
   
@@ -746,11 +762,11 @@ getAdj.Seurat <- function(obj, platform ='Visium'){
 find_neighbors <- function(pos, platform=c('ST', "Visium")) {
   # require(purrr)
   # require()
-  if (platform == "Visium") {
+  if (tolower(platform) == "visium") {
     ## Spots to left and right, two above, two below
     offsets <- data.frame(x.offset=c(-2, 2, -1,  1, -1, 1),
                           y.offset=c( 0, 0, -1, -1,  1, 1))
-  } else if (platform == "ST") {
+  } else if (tolower(platform) == "st") {
     ## L1 radius of 1 (spots above, right, below, and left)
     offsets <- data.frame(x.offset=c( 0, 1, 0, -1),
                           y.offset=c(-1, 0, 1,  0))
@@ -808,7 +824,7 @@ find_neighbors <- function(pos, platform=c('ST', "Visium")) {
   ij <- which(D != 0, arr.ind = T)
   ij
 }
-getAdj_reg <- function(pos, platform ='Visisum'){
+getAdj_reg <- function(pos, platform ='Visium'){
     # require(Matrix)
     ij <- find_neighbors(pos, platform)
     n <- nrow(pos)
@@ -816,13 +832,19 @@ getAdj_reg <- function(pos, platform ='Visisum'){
     return(Adj_sp)
 }
 
-getAdj_auto <- function(pos, lower.med=4, upper.med=6, radius.upper= 100){
+getAdj_auto <- function(pos, lower.med=4, upper.med=6, radius.upper= NULL){
   if (!inherits(pos, "matrix"))
     stop("method is only for  matrix object!")
   
   
-
-  radius.lower <- 1
+  ## Automatically determine the upper radius
+  n_spots <- nrow(pos)
+  idx <- sample(n_spots, min(100, n_spots))
+  dis <- dist(pos[idx,])
+  if(is.null(radius.upper)){
+    radius.upper <- max(dis)
+  }
+  radius.lower <- min(dis[dis>0])
   Adj_sp <- getneighborhood_fast(pos, radius=radius.upper)
   Med <- summary(Matrix::rowSums(Adj_sp))['Median']
   if(Med < lower.med) stop("The radius.upper is too smaller that cannot find median neighbors greater than 4.")
@@ -871,6 +893,18 @@ getAdj_manual <- function(pos, radius){
 
 
 
+# Approximated PCA for fast computation--------------------------------------------------------------
+
+approxPCA <- function(X, q){ ## speed the computation for initial values.
+  # require(irlba) 
+  n <- nrow(X)
+  svdX  <- irlba(A =X, nv = q)
+  PCs <- svdX$u %*% diag(svdX$d[1:q])
+  loadings <- svdX$v
+  dX <- PCs %*% t(loadings) - X
+  Lam_vec <- colSums(dX^2)/n
+  return(list(PCs = PCs, loadings = loadings, Lam_vec = Lam_vec))
+}
 
 
 # Weighted PCs ------------------------------------------------------------
@@ -947,6 +981,7 @@ RunWPCA.dgCMatrix<- function(object, q=15){
   colnames(hZ) <- paste0('WPCA', 1:q)
   return(hZ)
 }
+
 
 
 

@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 ## Generate the simulated data
-First, we generate the spatial transcriptomics data with lattice neighborhood, i.e. ST platform by using the function `gendata_RNAExp` in `DR.SC` package.
+First, we generate the spatial transcriptomics data with lattice neighborhood, i.e. ST platform by using the function `gendata_RNAExp` in `DR.SC` package, which is a Seurat object format. It is noted that the `meta.data` must include spatial coordinates in columns named "row" (x coordinates) and "col" (y coordinates)!
 ```{r  eval = FALSE}
 library(DR.SC)
 seu <- gendata_RNAExp(height=30, width=30,p=500, K=4)
@@ -25,28 +25,33 @@ head(seu@meta.data)
 ```
 ## Fit DR-SC using simulated data
 
-### Fit DR-SC based on highly variable genes(HVGs)
-For function `DR.SC`, users can specify the number of clusters $K$ or set `K` to be an integer vector by using modified BIC(MBIC) to determine $K$. First, we try using user-specified number of clusters. Then we show the version chosen by MBIC.
+### Data preprocessing
+This preprocessing includes Log-normalization and feature selection. Here we select highly variable genes for example first. The selected genes' names are saved in "seu@assays$RNA@var.features"
 ```{r  eval = FALSE}
 ### Given K
 library(Seurat)
 seu <- NormalizeData(seu)
-# choose 2000 variable features using Seurat
+# choose highly variable features using Seurat
 seu <- FindVariableFeatures(seu, nfeatures = 400)
+```
+
+### Fit DR-SC based on highly variable genes(HVGs)
+For function `DR.SC`, users can specify the number of clusters $K$ or set `K` to be an integer vector by using modified BIC(MBIC) to determine $K$. First, we try using user-specified number of clusters. Then we show the version chosen by MBIC.
+```{r  eval = FALSE}
+### Given K
 seu2 <- DR.SC(seu, K=4, platform = 'ST',  verbose=F)
 ```
 
-Using ARI to check the performance of clustering
+After finishing model fitting, we use ajusted rand index (`ARI`) to check the performance of clustering
 ```{r  eval = FALSE}
 mclust::adjustedRandIndex(seu2$spatial.drsc.cluster, seu$true_clusters)
 ```
-
-Show the spatial scatter plot for clusters
+Next, we show the application of DR-SC in visualization. First, we can visualize the  clusters from DR-SC on the spatial coordinates.
 ```{r  eval = FALSE}
 spatialPlotClusters(seu2)
 ```
 
-Show the tSNE plot based on the extracted features from DR-SC.
+We can also visualize the clusters from DR-SC on the two-dimensional tSNE based on the extracted features from DR-SC.
 ```{r  eval = FALSE}
 drscPlot(seu2)
 ```

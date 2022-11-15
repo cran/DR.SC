@@ -9,13 +9,24 @@ knitr::opts_chunk$set(
 
 ## ----eval = FALSE,message=FALSE, warning=FALSE--------------------------------
 #  data("dlpfc151510", package = 'DR.SC')
+#  
+
+## ----eval = FALSE,message=FALSE, warning=FALSE--------------------------------
+#  library(Seurat)
+#  count <- dlpfc151510@assays$RNA@counts
+#  meta_data <- data.frame(row=dlpfc151510@meta.data$row, col=dlpfc151510@meta.data$col, annotation=dlpfc151510$annotation)
+#  row.names(meta_data) <- colnames(count)
+#  ## create Seurat object
+#  dlpfc151510 <- CreateSeuratObject(counts=count, meta.data = meta_data)
+#  head(dlpfc151510)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  library(Seurat)
+#  
 #  # standard log-normalization
 #  dlpfc151510 <- NormalizeData(dlpfc151510, verbose = F)
 #  # choose 500 highly variable features
 #  seu <- FindVariableFeatures(dlpfc151510, nfeatures = 500, verbose = F)
+#  seu@assays$RNA@var.features[1:10]
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ### Given K
@@ -33,6 +44,7 @@ knitr::opts_chunk$set(
 ## ----eval = FALSE-------------------------------------------------------------
 #  # choose 480 spatially variable features
 #  seus <- FindSVGs(seu, nfeatures = 480)
+#  seus@assays$RNA@var.features[1:10]
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ### Given K
@@ -83,7 +95,7 @@ knitr::opts_chunk$set(
 #  DoHeatmap(subset(seus, downsample = 500), features = genes, size = 5)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  # choose 2000 spatially variable features
+#  # choose spatially variable features
 #  seus <- FindSVGs(seu, nfeatures = 480, verbose = F)
 
 ## ----eval = FALSE-------------------------------------------------------------
