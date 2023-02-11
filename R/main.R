@@ -2,7 +2,8 @@
 # usethis::use_data(HCC1)
 # Run to build the website
 # pkgdown::build_site()
-# DR.SC_3.0.tar.gz
+# build_home()
+# R CMD check --as-cran DR.SC_3.0.tar.gz
 
 ### Generate data without spatial dependence.
 gendata_noSp <- function(n=100, p =100, q=15, K = 8,  alpha=10, sigma2=1, seed=1){
