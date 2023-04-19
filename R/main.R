@@ -2,6 +2,7 @@
 # usethis::use_data(HCC1)
 # Run to build the website
 # pkgdown::build_site()
+# pkgdown::build_reference()
 # build_home()
 # R CMD check --as-cran DR.SC_3.0.tar.gz
 
@@ -307,7 +308,7 @@ readscRNAseq <- function(mtx, cells, features, ...){
 
 # Data prepocessing -------------------------------------------------------
 ## use SPARK to choose spatially variable genes
-FindSVGs <- function(seu, nfeatures=2000, covariates=NULL, num_core=1, verbose=TRUE){
+FindSVGs <- function(seu, nfeatures=2000, covariates=NULL, preHVGs=5000,num_core=1, verbose=TRUE){
   
   if (!inherits(seu, "Seurat"))
     stop("method is only for Seurat objects")
@@ -315,8 +316,12 @@ FindSVGs <- function(seu, nfeatures=2000, covariates=NULL, num_core=1, verbose=T
   # require(Seurat)
   assy <- DefaultAssay(seu)
   sp_count <- seu[[assy]]@counts
-  if(nrow(sp_count)>5000){
-    seu <- FindVariableFeatures(seu, nfeatures = 5000, verbose=verbose)
+  if(preHVGs<nfeatures){
+    warning("The number of preHVGs is smaller than nfeatures, and replaced by nfeatures!\n")
+    preHVGs <- nfeatures
+  }
+  if(nrow(sp_count)>preHVGs){
+    seu <- FindVariableFeatures(seu, nfeatures = preHVGs, verbose=verbose)
     sp_count <- seu[[assy]]@counts[seu[[assy]]@var.features,]
   }
   location <- as.data.frame(cbind(seu$row, seu$col))
@@ -843,7 +848,8 @@ getAdj_auto <- function(pos, lower.med=4, upper.med=6, radius.upper= NULL){
   idx <- sample(n_spots, min(100, n_spots))
   dis <- dist(pos[idx,])
   if(is.null(radius.upper)){
-    radius.upper <- max(dis)
+    #radius.upper <- max(dis)
+    radius.upper <- sort(dis)[20] ## select the nearest 20 spots.
   }
   radius.lower <- min(dis[dis>0])
   Adj_sp <- getneighborhood_fast(pos, radius=radius.upper)

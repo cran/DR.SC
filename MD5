@@ -1,7 +1,7 @@
-f3ec08f1c9ccbaca8d6689fbc89549c5 *DESCRIPTION
+af82dd5a89b206b338493bb9c79046e3 *DESCRIPTION
 d03d9fa8606c850df7210750063b2bcd *NAMESPACE
 92e58b462ae21c713bf759993ea1d678 *R/RcppExports.R
-6751007863e140f93a3a0445281df849 *R/main.R
+249093dbf0e0800d395b0f3a81511368 *R/main.R
 301bf9037768bcb69a3147239c6da657 *R/sparkx.R
 12ea77bb8cbd6944f5f40b9a64760e50 *R/visualizationR.R
 b37b790e062fffc16e211412d3afad4f *R/zzz.R
@@ -14,13 +14,13 @@ dd724f1e45b18f099a52dbb51c86f6fb *inst/doc/DR-SC.Rmd
 bb5bbea4cea7ff86980ec6e8b5bf9c0f *inst/doc/DR-SC.html
 190caec66b8e27469208a6b4d696f565 *inst/doc/DR.SC.DLPFC.R
 bc54aeb1525ca9b90a2c67301c406c0b *inst/doc/DR.SC.DLPFC.Rmd
-6d0a443c303ef0c8ddd7c8e812896147 *inst/doc/DR.SC.DLPFC.html
+4ded17282e222ed7528f9a38a73f3268 *inst/doc/DR.SC.DLPFC.html
 ba945d6c615b092976d39e6d4702762c *inst/doc/DR.SC.Simu.R
 8528c434f3b29f88a5209976e11e0b5b *inst/doc/DR.SC.Simu.Rmd
-bafebb95a23cbe23254a990742491a02 *inst/doc/DR.SC.Simu.html
+dc6ba9105ea46f1498e811eebfca9711 *inst/doc/DR.SC.Simu.html
 c870ce3aa7bb90589f362380692dc38b *man/DR.SC.Rd
 4c9069c598fea2260661884726c6c235 *man/DR.SC.fit.Rd
-afd83b1764ba0635cf0681c78c53078f *man/FindSVGs.Rd
+40177bcc127b0cf491db2781a69d7708 *man/FindSVGs.Rd
 9cdec4a514606ed5f76914541e08c95a *man/HCC1.Rd
 52eaa0b0aeadcb23a0df83f4c7dc2492 *man/RunWPCA.Rd
 7d21b69661ccfc3ea8a17c886a60a371 *man/drscPlot.Rd
