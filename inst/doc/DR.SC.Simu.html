@@ -12,7 +12,7 @@
 
 <meta name="author" content="Wei Liu" />
 
-<meta name="date" content="2023-08-08" />
+<meta name="date" content="2024-03-19" />
 
 <title>DR-SC: simulation</title>
 
@@ -25,6 +25,7 @@
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
     </style>
+
 
 
 <style type="text/css">
@@ -106,13 +107,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -318,7 +326,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">DR-SC: simulation</h1>
 <h4 class="author">Wei Liu</h4>
-<h4 class="date">2023-08-08</h4>
+<h4 class="date">2024-03-19</h4>
 
 
 
@@ -344,7 +352,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h3>Fit DR-SC based on highly variable genes(HVGs)</h3>
 <p>For function <code>DR.SC</code>, users can specify the number of clusters <span class="math inline">\(K\)</span> or set <code>K</code> to be an integer vector by using modified BIC(MBIC) to determine <span class="math inline">\(K\)</span>. First, we try using user-specified number of clusters. Then we show the version chosen by MBIC.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="co">### Given K</span></a>
-<a class="sourceLine" id="cb3-2" title="2">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seu, <span class="dt">K=</span><span class="dv">4</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>,  <span class="dt">verbose=</span>F)</a></code></pre></div>
+<a class="sourceLine" id="cb3-2" title="2">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seu, <span class="dt">q=</span><span class="dv">30</span>, <span class="dt">K=</span><span class="dv">4</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>,  <span class="dt">verbose=</span>F, <span class="dt">approxPCA=</span>T)</a></code></pre></div>
 <p>After finishing model fitting, we use ajusted rand index (<code>ARI</code>) to check the performance of clustering</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">mclust<span class="op">::</span><span class="kw">adjustedRandIndex</span>(seu2<span class="op">$</span>spatial.drsc.cluster, seu<span class="op">$</span>true_clusters)</a></code></pre></div>
 <p>Next, we show the application of DR-SC in visualization. First, we can visualize the clusters from DR-SC on the spatial coordinates.</p>
@@ -354,7 +362,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Show the UMAP plot based on the extracted features from DR-SC.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw">drscPlot</span>(seu2, <span class="dt">visu.method =</span> <span class="st">&#39;UMAP&#39;</span>)</a></code></pre></div>
 <p>Use MBIC to choose number of clusters:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seu, <span class="dt">q=</span><span class="dv">10</span>, <span class="dt">K=</span><span class="dv">2</span><span class="op">:</span><span class="dv">6</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>, <span class="dt">verbose=</span>F)</a>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seu, <span class="dt">q=</span><span class="dv">10</span>, <span class="dt">K=</span><span class="dv">2</span><span class="op">:</span><span class="dv">6</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>, <span class="dt">verbose=</span>F,<span class="dt">approxPCA=</span>T)</a>
 <a class="sourceLine" id="cb8-2" title="2"><span class="kw">mbicPlot</span>(seu2)</a></code></pre></div>
 </div>
 <div id="fit-dr-sc-based-on-spatially-variable-genessvgs" class="section level3">
@@ -364,7 +372,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb9-2" title="2">seu &lt;-<span class="st"> </span><span class="kw">NormalizeData</span>(seu, <span class="dt">verbose=</span>F)</a>
 <a class="sourceLine" id="cb9-3" title="3"><span class="co"># choose 400 spatially variable features using FindSVGs</span></a>
 <a class="sourceLine" id="cb9-4" title="4">seus &lt;-<span class="st"> </span><span class="kw">FindSVGs</span>(seu, <span class="dt">nfeatures =</span> <span class="dv">400</span>, <span class="dt">verbose =</span> F)</a>
-<a class="sourceLine" id="cb9-5" title="5">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seus, <span class="dt">K=</span><span class="dv">4</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>, <span class="dt">verbose=</span>F)</a></code></pre></div>
+<a class="sourceLine" id="cb9-5" title="5">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seus, <span class="dt">q=</span><span class="dv">4</span>, <span class="dt">K=</span><span class="dv">4</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>, <span class="dt">verbose=</span>F)</a></code></pre></div>
 <p>Using ARI to check the performance of clustering</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">mclust<span class="op">::</span><span class="kw">adjustedRandIndex</span>(seu2<span class="op">$</span>spatial.drsc.cluster, seu<span class="op">$</span>true_clusters)</a></code></pre></div>
 </div>
@@ -380,7 +388,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="dr-sc-can-automatically-determine-the-number-of-clusters" class="section level3">
 <h3>DR-SC can automatically determine the number of clusters</h3>
 <p>Use MBIC to choose number of clusters:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seus, <span class="dt">q=</span><span class="dv">10</span>, <span class="dt">K=</span><span class="dv">2</span><span class="op">:</span><span class="dv">6</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>,  <span class="dt">verbose=</span>F)</a>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">seu2 &lt;-<span class="st"> </span><span class="kw">DR.SC</span>(seus, <span class="dt">q=</span><span class="dv">4</span>, <span class="dt">K=</span><span class="dv">2</span><span class="op">:</span><span class="dv">6</span>, <span class="dt">platform =</span> <span class="st">&#39;ST&#39;</span>,  <span class="dt">verbose=</span>F)</a>
 <a class="sourceLine" id="cb14-2" title="2"><span class="kw">mbicPlot</span>(seu2)</a>
 <a class="sourceLine" id="cb14-3" title="3"><span class="co"># or plot BIC or AIC</span></a>
 <a class="sourceLine" id="cb14-4" title="4"><span class="co"># mbicPlot(seu2, criteria = &#39;BIC&#39;)</span></a>

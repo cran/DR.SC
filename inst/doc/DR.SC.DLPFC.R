@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ### Given K
-#  seu <- DR.SC(seu, K=7, platform = 'Visium', verbose=F)
+#  seu <- DR.SC(seu, K=7, platform = 'Visium', verbose=T, approxPCA=T)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  spatialPlotClusters(seu)
@@ -48,10 +48,11 @@ knitr::opts_chunk$set(
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ### Given K
-#  seus <- DR.SC(seus, K=7, platform = 'Visium', verbose=T)
+#  seus <- DR.SC(seus,  K=7, platform = 'Visium', verbose=F, approxPCA=T)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  spatialPlotClusters(seus)
+#  mclust::adjustedRandIndex(seus$spatial.drsc.cluster, seus$annotation)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  drscPlot(seus)

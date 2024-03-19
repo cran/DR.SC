@@ -471,8 +471,6 @@ get_varfeature_fromSeurat <- function(seu, assay=NULL){
 
 # Define DR.SC S3 function ------------------------------------------------
 
-
-
 DR.SC_fit <- function(X, K, Adj_sp=NULL, q=15,
                             error.heter= TRUE, beta_grid=seq(0.5, 5, by=0.5),
                             maxIter=25, epsLogLik=1e-5, verbose=FALSE, maxIter_ICM=6,
@@ -487,7 +485,7 @@ DR.SC_fit <- function(X, K, Adj_sp=NULL, q=15,
     X <- X[, sd_zeros !=0]
   }
   if(length(K)==1) coreNum <- 1 
-
+  q <- min(q, ncol(X)-1)
   message("Fit DR-SC model...\n")
   resList <- drsc(X,Adj_sp = Adj_sp, q=q, K=K, error.heter= error.heter, 
                   beta_grid=beta_grid,maxIter=maxIter, epsLogLik=epsLogLik,
@@ -498,7 +496,7 @@ DR.SC_fit <- function(X, K, Adj_sp=NULL, q=15,
   
   return(resList)
 }
-DR.SC <- function(seu, K, q=15,  platform= c('Visium', "ST", "Other_SRT", "scRNAseq"), ...) {
+DR.SC <- function(seu, K, q=50,  platform= c('Visium', "ST", "Other_SRT", "scRNAseq"), ...) {
   UseMethod("DR.SC")
 }
   
