@@ -46,7 +46,7 @@ In addition, each element of "Objdrsc" is a list with the following comoponents:
 \item{loglik}{pseudo observed log-likelihood.}
 }
 \references{
-\href{https://academic.oup.com/nar/article/50/12/e72/6555431}{Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219.}
+Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219. \doi{10.1093/nar/gkac219}.
 }
 \author{
 Wei Liu

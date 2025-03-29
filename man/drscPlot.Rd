@@ -11,7 +11,7 @@
  \item{seu}{an object of class "Seurat" obtained by \link{DR.SC}.}
  \item{dims}{a positive integer to specify the number of latent features for visualiztion.}
  \item{visu.method}{a string including 'tSNE' or "UMAP".}
- \item{...}{Other arguments passing to \link{DimPlot} function.}
+ \item{...}{Other arguments passing to \link[Seurat]{DimPlot} function.}
 }
 \details{
   Nothing

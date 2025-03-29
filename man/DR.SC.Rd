@@ -17,7 +17,7 @@
   \item{...}{Other arguments to pass into \link{DR.SC_fit} function.}
 }
 \details{
-seu is an object named \code{Seurat}, thich can easily created by R package \link{Seurat}.
+seu is an object named \code{Seurat}, thich can easily created by R package Seurat.
 DR-SC  model can be applied to analyze both single cell RNA sequencing data and spatially resoved transcriptomics (SRT) data. 
 
 If the data are collected by the single cell RNA sequencing techonologies which means there is no spatial information in object seu then a multinomial model is used to model the unobserved class labels. 
@@ -33,7 +33,7 @@ For lattice grids in ST platform (ST), the interior spot has four neighbors (lef
 
 }
 \references{
- \href{https://academic.oup.com/nar/article/50/12/e72/6555431}{Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219.}
+Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219. \doi{10.1093/nar/gkac219}.
 }
 \author{
 Wei Liu

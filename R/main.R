@@ -4,7 +4,7 @@
 # pkgdown::build_site()
 # pkgdown::build_reference()
 # build_home()
-# R CMD check --as-cran DR.SC_3.2.tar.gz
+# R CMD check --as-cran DR.SC_3.5.tar.gz
 
 
 

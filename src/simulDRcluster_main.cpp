@@ -17,7 +17,6 @@
 #include "mt_paral_job.h"
 #include "mt_paral_job2.h"
 
-#define INT_MIN (-INT_MAX - 1)
 
 using namespace Rcpp;
 using namespace arma;
@@ -257,7 +256,7 @@ Objdrsc drsc(const arma::mat& X, const arma::sp_mat& Adj, const arma::ivec& y_in
   // If p is sufficient large, loglik can not be computed.
   // But this can be solved by some programming tricks.
   vec loglik(maxIter), N(K, fill::zeros);
-  loglik(0) = INT_MIN; // -INFINITY
+  loglik(0) = -1e10; // -INFINITY
   
   // Define the variables that will be used in algorithm
   // variables usded in eavluating R.
@@ -563,7 +562,7 @@ Objdrsc_nonspa drsc_nonspa(const arma::mat& X, const arma::vec& Pi_int, const ar
   // If p is sufficient large, loglik can not be computed.
   // But this can be solved by some programming tricks.
   vec loglik(maxIter);
-  loglik(0) = INT_MIN;
+  loglik(0) = -1e10;
 
   // Define the variables that will be used in algorithm
   // vec mSk(n); double  logdSk; //mat A1(n,K, fill::zeros), Ck(q,q, fill::zeros);
