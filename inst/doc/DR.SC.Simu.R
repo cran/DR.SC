@@ -1,12 +1,12 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
 ## ----eval = FALSE-------------------------------------------------------------
+#  load('sim_seu.rds')
 #  library(DR.SC)
-#  seu <- gendata_RNAExp(height=30, width=30,p=500, K=4)
 #  head(seu@meta.data)
 
 ## ----eval = FALSE-------------------------------------------------------------
@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ### Given K
-#  seu2 <- DR.SC(seu, q=30, K=4, platform = 'ST',  verbose=F, approxPCA=T)
+#  seu2 <- DR.SC(seu, q=15, K=4, platform = 'ST',  verbose=F, approxPCA=T)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  mclust::adjustedRandIndex(seu2$spatial.drsc.cluster, seu$true_clusters)
@@ -41,7 +41,7 @@ knitr::opts_chunk$set(
 #  seu <- NormalizeData(seu, verbose=F)
 #  # choose 400 spatially variable features using FindSVGs
 #  seus <- FindSVGs(seu, nfeatures = 400, verbose = F)
-#  seu2 <- DR.SC(seus, q=4, K=4, platform = 'ST', verbose=F)
+#  seu2 <- DR.SC(seus, q=15, K=4, platform = 'ST', verbose=F)
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  mclust::adjustedRandIndex(seu2$spatial.drsc.cluster, seu$true_clusters)
@@ -91,7 +91,7 @@ knitr::opts_chunk$set(
 #      top_n(n = 30, wt = avg_log2FC) -> top
 #  ### select the marker genes that are also the variable genes.
 #  
-#  genes <- intersect(top$gene, seu2[['RNA']]@var.features)
+#  genes <- intersect(top$gene, VariableFeatures(seu2))
 #  ## Change the HVGs to SVGs
 #  #  <- topSVGs(seu2, 400)
 #  seu2 <- ScaleData(seu2, verbose = F)

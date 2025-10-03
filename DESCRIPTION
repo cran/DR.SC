@@ -1,8 +1,8 @@
 Type: Package
 Package: DR.SC
 Title: Joint Dimension Reduction and Spatial Clustering
-Version: 3.5
-Date: 2025-03-27
+Version: 3.6
+Date: 2025-10-02
 Authors@R: 
     c(person(given = "Wei",
              family = "Liu",
@@ -23,9 +23,9 @@ Description: Joint dimension reduction and spatial clustering is conducted for
     Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi and Jin Liu. (2022) <doi:10.1093/nar/gkac219>. It is not only computationally efficient and scalable to the sample size increment, but also is capable of choosing the smoothness parameter and the number of clusters as well.
 License: GPL-3
 Depends: parallel, spatstat.geom, R (>= 4.0.0)
-Imports: CompQuadForm, irlba, cowplot, ggplot2, GiRaF, MASS, Matrix,
-        mclust, methods, purrr, S4Vectors, RColorBrewer, Rcpp (>=
-        1.0.5), Seurat, stats
+Imports: CompQuadForm, irlba, cowplot, ggplot2, MASS, Matrix, mclust,
+        methods, purrr, S4Vectors, RColorBrewer, Rcpp (>= 1.0.5),
+        Seurat, stats
 Suggests: knitr, rmarkdown
 LinkingTo: Rcpp, RcppArmadillo
 VignetteBuilder: knitr
@@ -34,6 +34,7 @@ NeedsCompilation: yes
 RoxygenNote: 7.1.1
 URL: https://github.com/feiyoung/DR.SC
 BugReports: https://github.com/feiyoung/DR.SC/issues
-Packaged: 2025-03-29 13:45:54 UTC; Liuxianju
+LazyData: true
+Packaged: 2025-10-03 01:01:08 UTC; 10297
 Repository: CRAN
-Date/Publication: 2025-03-29 15:10:02 UTC
+Date/Publication: 2025-10-03 05:20:34 UTC

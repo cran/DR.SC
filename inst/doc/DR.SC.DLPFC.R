@@ -1,10 +1,11 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
 ## ----eval = FALSE-------------------------------------------------------------
+#  set.seed(2024)
 #  library("DR.SC")
 
 ## ----eval = FALSE,message=FALSE, warning=FALSE--------------------------------
@@ -26,13 +27,14 @@ knitr::opts_chunk$set(
 #  dlpfc151510 <- NormalizeData(dlpfc151510, verbose = F)
 #  # choose 500 highly variable features
 #  seu <- FindVariableFeatures(dlpfc151510, nfeatures = 500, verbose = F)
-#  seu@assays$RNA@var.features[1:10]
+#  VariableFeatures(seu)[1:10]
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ### Given K
 #  seu <- DR.SC(seu, K=7, platform = 'Visium', verbose=T, approxPCA=T)
 
 ## ----eval = FALSE-------------------------------------------------------------
+#  mclust::adjustedRandIndex(seu$spatial.drsc.cluster, seu$annotation)
 #  spatialPlotClusters(seu)
 
 ## ----eval = FALSE-------------------------------------------------------------
@@ -44,7 +46,7 @@ knitr::opts_chunk$set(
 ## ----eval = FALSE-------------------------------------------------------------
 #  # choose 480 spatially variable features
 #  seus <- FindSVGs(seu, nfeatures = 480)
-#  seus@assays$RNA@var.features[1:10]
+#  VariableFeatures(seu)[1:10]
 
 ## ----eval = FALSE-------------------------------------------------------------
 #  ### Given K

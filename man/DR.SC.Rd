@@ -33,7 +33,7 @@ For lattice grids in ST platform (ST), the interior spot has four neighbors (lef
 
 }
 \references{
-Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219. \doi{10.1093/nar/gkac219}.
+ \href{https://academic.oup.com/nar/article/50/12/e72/6555431}{Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219.}
 }
 \author{
 Wei Liu
@@ -47,7 +47,7 @@ nothing
 \examples{
 
 ## we generate the spatial transcriptomics data with lattice neighborhood, i.e. ST platform.
-seu <- gendata_RNAExp(height=10, width=10,p=50, K=4,platform="ST")
+data(seu)
 library(Seurat)
 seu <- NormalizeData(seu, verbose=FALSE)
 # choose 100 highly variable features

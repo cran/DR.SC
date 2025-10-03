@@ -22,7 +22,7 @@
    Return a \code{dgCMatrix} object recording the information of neighborhoods about each spot.
 }
 \references{
-Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219. \doi{10.1093/nar/gkac219}.
+  \href{https://academic.oup.com/nar/article/50/12/e72/6555431}{Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219.}
 }
 \author{
   Wei Liu
@@ -35,7 +35,7 @@ Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi & Jin
 }
 \examples{
   ## S3 method for class "Seurat"
-  seu <- gendata_RNAExp(height=20, width=20,p=200, K=4)
+  data(seu)
   Adj_sp <- getAdj(seu, platform = 'ST')
 }
 \concept{Lattice grids}
